@@ -11,6 +11,9 @@ node --experimental-fetch fetchforks.js
 
 # use repolist.json to clone and update forks
 ./clonefetch.rb
+
+# check result
+jq '.[].upstream_merge_result' repolist.json | uniq
 ```
 
 ## Requirement
