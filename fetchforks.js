@@ -10,10 +10,11 @@ let rawJson = '{}'
 try {
 	rawJson = fs.readFileSync(dbName, 'utf8')
 } catch(e) {
-	console.log('repolist.json not found, creating')
+	console.log(dbName+' not found, creating')
 }
 
 let repoMap = JSON.parse( rawJson || '{}')
+console.log(Object.keys(repoMap).length+' loaded')
 
 function fetchRepo(start, onComplete) {
 	console.log('fetching repo page ' + start)
@@ -31,8 +32,9 @@ function fetchRepo(start, onComplete) {
 			console.log(e, res.length, res);
 			return onComplete()
 		}
+		console.log('Saving '+Object.keys(repoMap).length)
+		fs.writeFileSync(dbName,JSON.stringify(repoMap,null, 2))
 		if(res.length>=100) fetchRepo(start+1)
-		else onComplete()
 		/* example: [{
 			id: 356935057,
 			node_id: 'MDEwOlJlcG9zaXRvcnkzNTY5MzUwNTc=',
@@ -141,7 +143,5 @@ function fetchRepo(start, onComplete) {
 	});
 }
 
-fetchRepo(1, function (){
-	fs.writeFileSync(dbName,JSON.stringify(repoMap,null, 2))
-});
+fetchRepo(14);
 
