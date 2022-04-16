@@ -21,9 +21,9 @@ DEFAULT_BRANCH_KEY = 'default_branch'
 HTML_URL_KEY = 'html_url'
 
 DBNAME = 'repolist.json'
-jsonMap = JSON.load(File.read(DBNAME))
-
-jsonMap.each do |k,v|
+rawJson = File.read(DBNAME)
+jsonMap = JSON.load(rawJson)
+jsonMap.sort_by{ rand() }.each do |k,v|
   Dir.chdir PWD
   if Dir.exist?"../#{k}"
     Dir.chdir "../#{k}"
@@ -37,15 +37,23 @@ jsonMap.each do |k,v|
   if upstream == ''
     cacheFile = "/tmp/#{k}.html"
     runcmd "curl '#{v[HTML_URL_KEY]}' > '#{cacheFile}'" unless File.exist? cacheFile
-    upstream = v[UPSTREAM_KEY] = runcmd "cat #{cacheFile} | grep 'forked from' | cut -d '>' -f 2 | cut -d '<' -f 1"
+    upstream = runcmd "cat #{cacheFile} | grep 'forked from' | cut -d '>' -f 2 | cut -d '<' -f 1"
     upstream.strip!
   end
+  
   runcmd "git fetch"
   next if upstream == ''
+  
   runcmd "git remote remove upstream"
   runcmd "git remote add upstream 'git@github.com:#{upstream}.git'"
   runcmd "git pull upstream #{v[DEFAULT_BRANCH_KEY]}"
+  runcmd "git merge upstream/#{v[DEFAULT_BRANCH_KEY]}" # TODO: maybe check upstream branch names first?
   runcmd "git push"
+  
+  # save state
+  puts "saving #{upstream}"
+  jsonMap[k][UPSTREAM_KEY] = upstream
+  Dir.chdir PWD
+  rawJson = jsonMap.to_json
+  File.write(DBNAME,rawJson)
 end
-
-File.write(jsonMap.to_json)
