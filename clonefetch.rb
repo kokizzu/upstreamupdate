@@ -19,6 +19,8 @@ UPSTREAM_KEY = 'upstream_key' # change on js also if this changed
 SSH_URL_KEY = 'ssh_url'
 DEFAULT_BRANCH_KEY = 'default_branch'
 HTML_URL_KEY = 'html_url'
+PULL_UPSTREAM_RES_KEY = 'upstream_pull_result'
+MERGE_UPSTREAM_RES_KEY = 'upstream_merge_result'
 
 DBNAME = 'repolist.json'
 rawJson = File.read(DBNAME)
@@ -46,14 +48,19 @@ jsonMap.sort_by{ rand() }.each do |k,v|
   
   runcmd "git remote remove upstream"
   runcmd "git remote add upstream 'git@github.com:#{upstream}.git'"
-  runcmd "git pull upstream #{v[DEFAULT_BRANCH_KEY]}"
-  runcmd "git merge upstream/#{v[DEFAULT_BRANCH_KEY]}" # TODO: maybe check upstream branch names first?
+  v[PULL_UPSTREAM_RES_KEY] = runcmd "git pull upstream #{v[DEFAULT_BRANCH_KEY]}"
+  # TODO: maybe check upstream branch names first?
+  v[MERGE_UPSTREAM_RES_KEY] = runcmd "git merge --no-edit upstream/#{v[DEFAULT_BRANCH_KEY]}" 
   runcmd "git push"
   
   # save state
   puts "saving #{upstream}"
-  jsonMap[k][UPSTREAM_KEY] = upstream
+  v[UPSTREAM_KEY] = upstream
+  jsonMap[k] = v
   Dir.chdir PWD
   rawJson = jsonMap.to_json
   File.write(DBNAME,rawJson)
 end
+
+# simpler aproach if already cloned
+# for branch in $(git ls-remote --heads upstream|sed 's#^.*refs/heads/##'); do git push origin refs/remotes/upstream/$branch:refs/heads/$branch; done
