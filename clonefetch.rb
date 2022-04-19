@@ -32,6 +32,7 @@ jsonMap.sort_by{ rand() }.each do |k,v|
   else 
     Dir.chdir '..'
     runcmd "git clone --depth 1 #{v[SSH_URL_KEY]}"
+    next unless Dir.exists? "#{k}"
     Dir.chdir "#{k}"
   end
   upstream = v[UPSTREAM_KEY]
